@@ -10,12 +10,13 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { en, type MsgKey } from './en.js';
 import { zh } from './zh.js';
+import { ar } from './ar.js';
 
-export type Locale = 'en' | 'zh';
+export type Locale = 'en' | 'zh' | 'ar';
 
 export type MsgParams = Record<string, string | number>;
 
-const DICTS: Record<Locale, Record<string, string>> = { en, zh };
+const DICTS: Record<Locale, Record<string, string>> = { en, zh, ar };
 
 const storage = new AsyncLocalStorage<Locale>();
 
@@ -42,6 +43,7 @@ export function resolveLocale(header: unknown): Locale {
     .sort((a, b) => b.q - a.q);
   for (const { tag } of parts) {
     if (tag.startsWith('zh')) return 'zh';
+    if (tag.startsWith('ar')) return 'ar';
     if (tag.startsWith('en')) return 'en';
   }
   return 'en';

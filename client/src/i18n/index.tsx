@@ -1,29 +1,31 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { en, type MsgKey } from './en';
 import { zh } from './zh';
+import { ar } from './ar';
 import { emitReload } from '../state/store';
 
 export type { MsgKey };
 
 /** 支持的界面语言：英文为默认 */
-export type Lang = 'en' | 'zh';
+export type Lang = 'en' | 'zh' | 'ar';
 
 /** 语言下拉候选项 */
 export const LANG_OPTIONS: { value: Lang; label: string }[] = [
   { value: 'en', label: 'English' },
   { value: 'zh', label: '中文' },
+  { value: 'ar', label: 'العربية' },
 ];
 
 export type MsgParams = Record<string, string | number>;
 export type TFunc = (key: MsgKey, params?: MsgParams) => string;
 
 const STORAGE_KEY = 'lsh-lang';
-const DICTS: Record<Lang, Record<string, string>> = { en, zh };
+const DICTS: Record<Lang, Record<string, string>> = { en, zh, ar };
 
 function readStored(): Lang {
   try {
     const v = localStorage.getItem(STORAGE_KEY);
-    if (v === 'zh' || v === 'en') return v;
+    if (v === 'zh' || v === 'en' || v === 'ar') return v;
   } catch {
     /* localStorage 不可用时回落默认值 */
   }
@@ -56,9 +58,11 @@ export function rich(text: string): ReactNode[] {
   return text.split('**').map((part, i) => (i % 2 === 1 ? <strong key={part}>{part}</strong> : part));
 }
 
-/** 名称列表连接符：中文用「、」，英文用「, 」 */
+/** 名称列表连接符：中文用「、」，阿拉伯文用「، 」，英文用「, 」 */
 export function joinList(items: string[]): string {
-  return items.join(current === 'zh' ? '、' : ', ');
+  if (current === 'zh') return items.join('、');
+  if (current === 'ar') return items.join('، ');
+  return items.join(', ');
 }
 
 interface I18nValue {
@@ -100,9 +104,10 @@ export function I18nProvider({ children }: Readonly<{ children: ReactNode }>) {
     };
   }, []);
 
-  // 同步 <html lang>，利于无障碍与浏览器排版
+  // 同步 <html lang> 与书写方向（阿拉伯语为从右到左），利于无障碍与浏览器排版
   useEffect(() => {
-    document.documentElement.lang = langState === 'zh' ? 'zh-CN' : 'en';
+    document.documentElement.lang = langState === 'zh' ? 'zh-CN' : langState === 'ar' ? 'ar' : 'en';
+    document.documentElement.dir = langState === 'ar' ? 'rtl' : 'ltr';
   }, [langState]);
 
   const setLang = useCallback((l: Lang) => applyLang(l), []);
